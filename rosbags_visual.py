@@ -2,7 +2,7 @@ import cv2
 import open3d as o3d
 from zed_utils import ZEDBagReader  # Importing your custom module
 
-BAG_PATH = '/home/walkie/rosbag/zed2i_2_bag'
+BAG_PATH = 'c:/Users/scar15/Desktop/zed_rosbag/'
 
 def display_zed_bag(bag_path_str):
     # 1. Initialize your ZEDBagReader module

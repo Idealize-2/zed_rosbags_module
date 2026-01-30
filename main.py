@@ -2,7 +2,7 @@ from zed_utils import ZEDBagReader
 import cv2
 
 def main():
-    reader = ZEDBagReader('/home/walkie/rosbag/zed2i_2_bag')
+    reader = ZEDBagReader('c:/Users/scar15/Desktop/zed_rosbag/')
     for frame in reader.images:
         cv2.imshow('RGB', frame)
 
