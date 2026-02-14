@@ -39,11 +39,41 @@ class ZEDBagReader:
         self._depths.append(depth)
 
     def _handle_pc(self, msg):
-        # PointCloud2 to XYZ (ignoring color for speed)
-        full_pc = np.frombuffer(msg.data, dtype=np.float32).reshape(-1, msg.point_step // 4)
-        xyz = full_pc[:, :3]
-        self._point_clouds.append(xyz[~np.isnan(xyz).any(axis=1)])
+        # 1. Parse Fields
+        fields = {f.name.lower(): f for f in msg.fields}
+        
+        if 'x' not in fields or 'y' not in fields or 'z' not in fields:
+            return
 
+        # 2. Determine Data Types
+        def get_dtype(ros_type):
+            return np.float32 if ros_type == 7 else np.float64
+
+        dtype_x = get_dtype(fields['x'].datatype)
+        dtype_y = get_dtype(fields['y'].datatype)
+        dtype_z = get_dtype(fields['z'].datatype)
+
+        # 3. Extract Data using Offsets and Strides
+        buf = memoryview(msg.data)
+        num_points = msg.width * msg.height
+        stride = msg.point_step
+
+        x = np.ndarray(shape=(num_points,), dtype=dtype_x, buffer=buf, 
+                       offset=fields['x'].offset, strides=(stride,))
+        y = np.ndarray(shape=(num_points,), dtype=dtype_y, buffer=buf, 
+                       offset=fields['y'].offset, strides=(stride,))
+        z = np.ndarray(shape=(num_points,), dtype=dtype_z, buffer=buf, 
+                       offset=fields['z'].offset, strides=(stride,))
+
+        # 4. Stack into (N, 3) array
+        xyz = np.stack([x, y, z], axis=-1).astype(np.float32)
+        
+        # --- FIX: Filter out NaN AND Infinity ---
+        # Simulation data often has 'inf' for sky/far objects, which breaks Open3D
+        mask = np.isfinite(xyz).all(axis=1)
+        valid_xyz = xyz[mask]
+
+        self._point_clouds.append(valid_xyz)
     
 
     # Properties make the class act like a data structure

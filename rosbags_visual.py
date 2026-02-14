@@ -2,7 +2,10 @@ import cv2
 import open3d as o3d
 from zed_utils import ZEDBagReader  # Importing your custom module
 
-BAG_PATH = 'c:/Users/scar15/Desktop/zed_rosbag/'
+#BAG_PATH = '/home/walkie/robocup2026/rosbag/13022026-SImulation'
+
+
+BAG_PATH = '/home/walkie/robocup2026/rosbag/2026-02-12-16-08-28'
 
 def display_zed_bag(bag_path_str):
     # 1. Initialize your ZEDBagReader module
@@ -50,7 +53,7 @@ def display_zed_bag(bag_path_str):
             vis.update_renderer()
 
         # Added a 33ms delay to simulate ~30 FPS playback speed
-        if cv2.waitKey(33) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     vis.destroy_window()

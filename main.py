@@ -2,9 +2,10 @@ from zed_utils import ZEDBagReader
 import cv2
 
 def main():
-    reader = ZEDBagReader('c:/Users/scar15/Desktop/zed_rosbag/')
-    for frame in reader.images:
-        cv2.imshow('RGB', frame)
+    reader = ZEDBagReader('/home/walkie/robocup2026/rosbag/13022026-SImulation')
+    for frame in reader.point_clouds:
+        cv2.imshow('PointCloud', frame)
+        #print(frame)
 
             
         if cv2.waitKey(33) & 0xFF == ord('q'): # wait 33 key for framerate purpose
