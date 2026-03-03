@@ -1,8 +1,8 @@
 | Property | Data Type | Description |
 | --- | --- | --- |
-| .images | List[np.ndarray] | RGB images with shape (H, W, 3) and uint8 encoding. |
-| .depths | List[np.ndarray] | Depth maps with shape (H, W) and float32 values representing meters. |
-|.point_clouds|List[np.ndarray]|Filtered XYZ coordinates with shape (N, 3) in meters.|
+| .images |List[Tuple[float, np.ndarray]] | Hardware timestamp (seconds) and BGR images with shape (H, W, 3) in uint8 format. |
+| .depths | List[Tuple[float, np.ndarray]] | Hardware timestamp (seconds) and Depth maps with shape (H, W) in float32 format (meters). |
+|.point_clouds|List[Tuple[float, np.ndarray]]|Hardware timestamp (seconds) and Filtered XYZ coordinates with shape (N, 3) in float32 format (meters).|
 
 N (Number of Points)
 
@@ -14,13 +14,16 @@ from zed_bag_reader import ZEDBagReader
 # Initialize the reader with the path to your bag folder
 reader = ZEDBagReader('/home/walkie/rosbag/zed2i_2_bag')
 
-# Access images like a standard Python list
-first_image = reader.images[0]
+# Access data by unpacking the tuple (Timestamp, Data)
+img_time, first_image = reader.images[0]
 total_depth_frames = len(reader.depths)
 
 # Calculate distance to a specific pixel in the first frame
 # (e.g., center pixel distance in meters)
-h, w = reader.depths[0].shape
-distance = reader.depths[0][h//2, w//2]
+depth_time, first_depth = reader.depths[0]
+h, w = first_depth.shape
+distance = first_depth[h//2, w//2]
+
+print(f"Data captured at: {depth_time:.4f} seconds")
 print(f"Distance to center: {distance:.2f}m")
 ```

@@ -3,8 +3,8 @@ import cv2
 
 def main():
     reader = ZEDBagReader('/home/walkie/robocup2026/rosbag/13022026-SImulation')
-    for frame in reader.point_clouds:
-        cv2.imshow('PointCloud', frame)
+    for time, frame in reader.images:
+        cv2.imshow('Image', frame)
         #print(frame)
 
             

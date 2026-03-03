@@ -25,18 +25,26 @@ class ZEDBagReader:
                 if connection.topic in self.topic_map:
                     msg = reader.deserialize(rawdata, connection.msgtype)
                     self.topic_map[connection.topic](msg)
-    
+
+        # Sort lists chronologically based on the first element of the tuple (the timestamp)
+        self._images.sort(key=lambda x: x[0])
+        self._depths.sort(key=lambda x: x[0])
+        self._point_clouds.sort(key=lambda x: x[0])
 
     def _handle_rgb(self, msg):
         # Reshape into (Height, Width, 3)
         img = np.frombuffer(msg.data, dtype=np.uint8).reshape(msg.height, msg.width, -1)
         # ZED is RGB, OpenCV wants BGR
-        self._images.append(img)
+        img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+        
+        total_times = self.extract_sensor_time(msg)  # You can store or use this timestamp as needed
+        self._images.append((total_times, img))
 
     def _handle_depth(self, msg):
         # Use .copy() to avoid 'buffer is read-only' errors in some numpy versions
         depth = np.frombuffer(msg.data, dtype=np.float32).reshape(msg.height, msg.width).copy()
-        self._depths.append(depth)
+        total_times = self.extract_sensor_time(msg)  # You can store or use this timestamp as needed
+        self._depths.append((total_times, depth))
 
     def _handle_pc(self, msg):
         # 1. Parse Fields
@@ -72,8 +80,18 @@ class ZEDBagReader:
         # Simulation data often has 'inf' for sky/far objects, which breaks Open3D
         mask = np.isfinite(xyz).all(axis=1)
         valid_xyz = xyz[mask]
+        total_times = self.extract_sensor_time(msg)  # You can store or use this timestamp as needed
 
-        self._point_clouds.append(valid_xyz)
+        self._point_clouds.append((total_times, valid_xyz))
+
+    def extract_sensor_time(self, msg):
+        # msg.header.stamp contains 'sec' and 'nanosec'
+        seconds = msg.header.stamp.sec
+        nanoseconds = msg.header.stamp.nanosec
+        
+        # Combine them into a single float (total seconds)
+        total_time = seconds + (nanoseconds * 1e-9)
+        return total_time
     
 
     # Properties make the class act like a data structure
