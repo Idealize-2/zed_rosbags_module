@@ -5,8 +5,7 @@ from zed_utils import ZEDBagReader  # Importing your custom module
 #BAG_PATH = '/home/walkie/robocup2026/rosbag/13022026-SImulation'
 
 
-BAG_PATH = '../sim_real_rosbag.tar/sim_real_rosbag/real_14022026'
-
+BAG_PATH = '/home/walkie/walkie-projects/walkie-ros-ws/rosbag/2026-03-04-18-07-59-Sim'
 def display_zed_bag(bag_path_str):
     # 1. Initialize your ZEDBagReader module
     # This will load all images, depths, and point clouds into memory
@@ -65,6 +64,10 @@ def display_zed_bag(bag_path_str):
         vis.poll_events()
         vis.update_renderer()
 
+        time , pose, qurtaion = reader.poses[i]
+        print(f"Time: {time}, Pose: {pose}, Quaternion: {qurtaion}")
+
+
         # Added a 33ms delay to simulate ~30 FPS playback speed
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
@@ -73,4 +76,4 @@ def display_zed_bag(bag_path_str):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    display_zed_bag(BAG_PATH)
+    display_zed_bag(BAG_PATH) 
