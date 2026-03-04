@@ -9,11 +9,14 @@ class ZEDBagReader:
         self._images = []
         self._depths = []
         self._point_clouds = []
+        self._poses = []  # <-- Added for pose
+
         # Mapping topics to their processing functions
         self.topic_map = {
             '/zed/zed_node/rgb/color/rect/image': self._handle_rgb,
             '/zed/zed_node/depth/depth_registered': self._handle_depth,
-            '/zed/zed_node/point_cloud/cloud_registered': self._handle_pc
+            '/zed/zed_node/point_cloud/cloud_registered': self._handle_pc,
+            '/current_pose': self._handle_pose
         }
         
         self._load_data()
@@ -30,6 +33,7 @@ class ZEDBagReader:
         self._images.sort(key=lambda x: x[0])
         self._depths.sort(key=lambda x: x[0])
         self._point_clouds.sort(key=lambda x: x[0])
+        self._poses.sort(key=lambda x: x[0])
 
     def _handle_rgb(self, msg):
         # Reshape into (Height, Width, 3)
@@ -83,6 +87,20 @@ class ZEDBagReader:
         total_times = self.extract_sensor_time(msg)  # You can store or use this timestamp as needed
 
         self._point_clouds.append((total_times, valid_xyz))
+    
+    def _handle_pose(self, msg):
+        total_time = self.extract_sensor_time(msg)
+        
+        # Extract position
+        pos = msg.pose.pose.position
+        position = np.array([pos.x, pos.y, pos.z], dtype=np.float64)
+        
+        # Extract orientation (quaternion)
+        ori = msg.pose.pose.orientation
+        quaternion = np.array([ori.x, ori.y, ori.z, ori.w], dtype=np.float64)
+        
+        # We append a tuple of: (timestamp, position_array, quaternion_array)
+        self._poses.append((total_time, position, quaternion))
 
     def extract_sensor_time(self, msg):
         # msg.header.stamp contains 'sec' and 'nanosec'
@@ -106,3 +124,7 @@ class ZEDBagReader:
     @property
     def point_clouds(self):
         return self._point_clouds
+    
+    @property
+    def poses(self):
+        return self._poses
