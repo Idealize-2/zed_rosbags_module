@@ -2,7 +2,7 @@
 | --- | --- | --- |
 | .images |List[Tuple[float, np.ndarray]] | Hardware timestamp (seconds) and BGR images with shape (H, W, 3) in uint8 format. |
 | .depths | List[Tuple[float, np.ndarray]] | Hardware timestamp (seconds) and Depth maps with shape (H, W) in float32 format (meters). |
-|.point_clouds|List[Tuple[float, np.ndarray]]|Hardware timestamp (seconds) and Filtered XYZ coordinates with shape (N, 3) in float32 format (meters).|
+|.point_clouds|List[Tuple[float, np.ndarray, np.ndarray]]]|Hardware timestamp (seconds), Filtered XYZ coordinates with shape (N, 3) in float32 format(meter), and RGB colors with shape (N, 3) in float64 format [0,1].|
 |.poses|List[Tuple[float, np.ndarray, np.ndarray]]|Hardware timestamp (seconds), Position (x, y, z) in meters, and Orientation Quaternion (x, y, z, w).|
 
 N (Number of Points)
