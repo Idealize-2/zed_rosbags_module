@@ -57,36 +57,50 @@ class ZEDBagReader:
         if 'x' not in fields or 'y' not in fields or 'z' not in fields:
             return
 
-        # 2. Determine Data Types
         def get_dtype(ros_type):
             return np.float32 if ros_type == 7 else np.float64
 
-        dtype_x = get_dtype(fields['x'].datatype)
-        dtype_y = get_dtype(fields['y'].datatype)
-        dtype_z = get_dtype(fields['z'].datatype)
-
-        # 3. Extract Data using Offsets and Strides
         buf = memoryview(msg.data)
-        num_points = msg.width * msg.height
         stride = msg.point_step
+        num_points = len(buf) // stride 
 
-        x = np.ndarray(shape=(num_points,), dtype=dtype_x, buffer=buf, 
-                       offset=fields['x'].offset, strides=(stride,))
-        y = np.ndarray(shape=(num_points,), dtype=dtype_y, buffer=buf, 
-                       offset=fields['y'].offset, strides=(stride,))
-        z = np.ndarray(shape=(num_points,), dtype=dtype_z, buffer=buf, 
-                       offset=fields['z'].offset, strides=(stride,))
-
-        # 4. Stack into (N, 3) array
+        # 2. Extract XYZ
+        x = np.ndarray(shape=(num_points,), dtype=get_dtype(fields['x'].datatype), buffer=buf, offset=fields['x'].offset, strides=(stride,))
+        y = np.ndarray(shape=(num_points,), dtype=get_dtype(fields['y'].datatype), buffer=buf, offset=fields['y'].offset, strides=(stride,))
+        z = np.ndarray(shape=(num_points,), dtype=get_dtype(fields['z'].datatype), buffer=buf, offset=fields['z'].offset, strides=(stride,))
         xyz = np.stack([x, y, z], axis=-1).astype(np.float32)
-        
-        # --- FIX: Filter out NaN AND Infinity ---
-        # Simulation data often has 'inf' for sky/far objects, which breaks Open3D
-        mask = np.isfinite(xyz).all(axis=1)
-        valid_xyz = xyz[mask]
-        total_times = self.extract_sensor_time(msg)  # You can store or use this timestamp as needed
 
-        self._point_clouds.append((total_times, valid_xyz))
+        # 3. Extract True Colors Using Standard ROS Float32 Bitwise Unpacking
+        has_rgb = 'rgb' in fields
+        if has_rgb:
+            # Read the rgb field as a float32 array
+            rgb_float = np.ndarray(shape=(num_points,), dtype=np.float32, buffer=buf, offset=fields['rgb'].offset, strides=(stride,))
+            
+            # View the float32 bits safely as uint32 integers
+            rgb_uint32 = rgb_float.view(np.uint32)
+            
+            # ROS packs RGB into uint32: 0x00RRGGBB (or BGRA depending on camera)
+            # Standard bitwise shift to extract the channels safely
+            r = ((rgb_uint32 >> 16) & 255).astype(np.float64) / 255.0
+            g = ((rgb_uint32 >> 8) & 255).astype(np.float64) / 255.0
+            b = (rgb_uint32 & 255).astype(np.float64) / 255.0
+            
+            # Note: If colors look swapped (e.g. Red looks Blue), simply swap 'r' and 'b' in this stack:
+            colors = np.stack([r, g, b], axis=-1)
+        else:
+            colors = None
+
+        # 4. Remove NaN/Inf points
+        valid_xyz_mask = np.isfinite(xyz).all(axis=1)
+        
+        valid_xyz = xyz[valid_xyz_mask]
+        valid_colors = colors[valid_xyz_mask] if has_rgb else None
+
+        if len(valid_xyz) == 0:
+            return
+
+        total_times = self.extract_sensor_time(msg)
+        self._point_clouds.append((total_times, valid_xyz, valid_colors))
     
     def _handle_pose(self, msg):
         total_time = self.extract_sensor_time(msg)

@@ -5,7 +5,8 @@ from zed_utils import ZEDBagReader  # Importing your custom module
 #BAG_PATH = '/home/walkie/robocup2026/rosbag/13022026-SImulation'
 
 
-BAG_PATH = '/home/walkie/walkie-projects/walkie-ros-ws/rosbag/2026-03-04-18-07-59-Sim'
+BAG_PATH = '/home/walkie/robocup2026/rosbag/2026-02-12-16-08-28'
+
 def display_zed_bag(bag_path_str):
     # 1. Initialize your ZEDBagReader module
     # This will load all images, depths, and point clouds into memory
@@ -51,22 +52,25 @@ def display_zed_bag(bag_path_str):
             else:
                 # We found the closest match, stop advancing
                 break
-        pc_time, xyz = reader.point_clouds[j] # Already filtered for NaNs in your module
+        pc_time, xyz ,rgb= reader.point_clouds[j] # Already filtered for NaNs in your module
 
         # Update Open3D Geometry
         pcd.points = o3d.utility.Vector3dVector(xyz)
         
+        # Update Open3D Geometry colors
+        if rgb is not None:
+            pcd.colors = o3d.utility.Vector3dVector(rgb)
+
         if first_pcd:
             vis.add_geometry(pcd)
             first_pcd = False
+
+        
         
         vis.update_geometry(pcd)
         vis.poll_events()
         vis.update_renderer()
-
-        time , pose, qurtaion = reader.poses[i]
-        print(f"Time: {time}, Pose: {pose}, Quaternion: {qurtaion}")
-
+        print(rgb)
 
         # Added a 33ms delay to simulate ~30 FPS playback speed
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -76,4 +80,4 @@ def display_zed_bag(bag_path_str):
     cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-    display_zed_bag(BAG_PATH) 
+    display_zed_bag(BAG_PATH)
