@@ -13,9 +13,9 @@ class ZEDBagReader:
 
         # Mapping topics to their processing functions
         self.topic_map = {
-            '/zed/zed_node/rgb/color/rect/image': self._handle_rgb,
-            '/zed/zed_node/depth/depth_registered': self._handle_depth,
-            '/zed/zed_node/point_cloud/cloud_registered': self._handle_pc,
+            '/zed_head/zed_node/rgb/color/rect/image': self._handle_rgb,
+            '/zed_head/zed_node/depth/depth_registered': self._handle_depth,
+            '/zed_head/zed_node/point_cloud/cloud_registered': self._handle_pc,
             '/current_pose': self._handle_pose
         }
         
