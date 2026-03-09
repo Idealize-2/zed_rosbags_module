@@ -3,15 +3,13 @@ import open3d as o3d
 import numpy as np
 from zed_utils import ZEDBagReader  # Importing your custom module
 
-#BAG_PATH = '/home/walkie/robocup2026/rosbag/13022026-SImulation'
-
-
-BAG_PATH = '/home/walkie/robocup2026/rosbag/2026-03-06-14-36-20'
+BAG_PATH = '/home/walkie/robocup2026/rosbag/13022026-SImulation'
 
 def display_zed_bag(bag_path_str):
     # 1. Initialize your ZEDBagReader module
     # This will load all images, depths, and point clouds into memory
     reader = ZEDBagReader(bag_path_str)
+    print(len(reader.point_clouds),len(reader.images),len(reader.depths), len(reader.poses))
     
     # 2. Initialize Open3D Visualizer
     vis = o3d.visualization.Visualizer()
@@ -24,7 +22,6 @@ def display_zed_bag(bag_path_str):
     
     first_pcd = True
     
-    print(len(reader.point_clouds),len(reader.images),len(reader.depths))
 
 
     # Use the length of the images list to drive the loop
@@ -35,6 +32,8 @@ def display_zed_bag(bag_path_str):
         # Your module handles the reshape and BGR conversion
         cv2.imshow('ZED RGB', img_data)
 
+        print(reader.poses[i])
+        
         # --- Display Depth Image from your module ---
         if i < len(reader.depths):
             depth_time, depth_img = reader.depths[i]
