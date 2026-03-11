@@ -9,28 +9,29 @@ N (Number of Points)
 
 ## How to use
 
-```
-from zed_bag_reader import ZEDBagReader
+```python
+from zed_utils import ZEDBagReader
 
-# Initialize the reader with the path to your bag folder
+# Initialize the reader
 reader = ZEDBagReader('/home/walkie/rosbag/zed2i_2_bag')
 
-# Access data by unpacking the tuple (Timestamp, Data)
-img_time, first_image = reader.images[0]
-total_depth_frames = len(reader.depths)
-
-# Calculate distance to a specific pixel in the first frame
-# (e.g., center pixel distance in meters)
-depth_time, first_depth = reader.depths[0]
-h, w = first_depth.shape
-distance = first_depth[h//2, w//2]
-
-print(f"Data captured at: {depth_time:.4f} seconds")
-print(f"Distance to center: {distance:.2f}m")
-
-# Grab the very first pose
-pose_time, position, quaternion = reader.poses[0]
-
-print(f"X position: {position[0]:.2f}")
-print(f"Heading (w): {quaternion[3]:.2f}")
+# Process the bag in chunks of 50 frames to avoid memory overload
+for chunk in reader.read_chunks(chunk_size=50):
+    for frame in chunk:
+        print(f"Time: {frame['time']}")
+        
+        # Access RGB
+        img = frame['image']
+        
+        # Access Depth (if available for this frame)
+        if frame['depth']:
+            depth_time, depth_map = frame['depth']
+            
+        # Access Point Cloud (if available)
+        if frame['point_cloud']:
+            pc_time, xyz, rgb = frame['point_cloud']
+            
+        # Access Pose (if available)
+        if frame['pose']:
+            pose_time, position, quaternion = frame['pose']
 ```
